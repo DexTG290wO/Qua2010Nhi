@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Model viewer</title>
+<style>
+  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #ece8e2; }
+  canvas { display: block; }
+  #label {
+    position: fixed; left: 16px; top: 14px; z-index: 10;
+    font: 700 22px/1.2 "Segoe UI", sans-serif; color: #3d3230;
+    letter-spacing: .02em; text-transform: capitalize;
+    background: rgba(255,255,255,.72); padding: 8px 14px; border-radius: 10px;
+  }
+  #hint { position: fixed; right: 14px; bottom: 12px; font: 12px "Segoe UI"; color: #7b6f6a; z-index: 10; }
+</style>
+</head>
+<body>
+<div id="label"></div>
+<div id="hint"></div>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+
+const params = new URLSearchParams(location.search);
+const id = params.get('id') || 'fox';
+const angleName = params.get('angle') || 'three-quarter';
+const clipName = params.get('clip') || 'Idle';
+const clipTime = parseFloat(params.get('time') || '0');
+const headOnly = params.get('head') === '1';
+const width = parseInt(params.get('w') || '760', 10);
+const height = parseInt(params.get('h') || '760', 10);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(width, height);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.02;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xe9e5df);
+scene.fog = new THREE.Fog(0xe9e5df, 8, 18);
+
+const camera = new THREE.PerspectiveCamera(32, width / height, 0.02, 100);
+
+const hemi = new THREE.HemisphereLight(0xfff6ea, 0x9a8f86, 2.0);
+scene.add(hemi);
+const key = new THREE.DirectionalLight(0xfff2df, 3.2);
+key.position.set(3.2, 5.2, 4.4);
+key.castShadow = true;
+key.shadow.mapSize.set(1024, 1024);
+key.shadow.camera.near = 0.5;
+key.shadow.camera.far = 20;
+key.shadow.camera.left = -3; key.shadow.camera.right = 3;
+key.shadow.camera.top = 3; key.shadow.camera.bottom = -3;
+key.shadow.bias = -0.0008;
+key.shadow.normalBias = 0.02;
+scene.add(key);
+const rim = new THREE.DirectionalLight(0xcfe0ff, 1.3);
+rim.position.set(-4, 3, -3);
+scene.add(rim);
+const fill = new THREE.DirectionalLight(0xffe8e0, 0.9);
+fill.position.set(-2, 1.5, 4);
+scene.add(fill);
+
+const ground = new THREE.Mesh(
+  new THREE.CircleGeometry(9, 64),
+  new THREE.MeshStandardMaterial({ color: 0xded8d0, roughness: 0.95, metalness: 0 })
+);
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+const loader = new GLTFLoader();
+const gltf = await loader.loadAsync(`/models/${id}.glb`);
+const model = gltf.scene;
+scene.add(model);
+
+let mixer = null;
+let action = null;
+if (gltf.animations && gltf.animations.length) {
+  mixer = new THREE.AnimationMixer(model);
+  const clip = gltf.animations.find((c) => c.name === clipName) || gltf.animations[0];
+  action = mixer.clipAction(clip);
+  action.play();
+  mixer.setTime(clipTime);
+  action.paused = true;
+}
+
+model.updateMatrixWorld(true);
+const box = new THREE.Box3().setFromObject(model);
+const size = box.getSize(new THREE.Vector3());
+const center = box.getCenter(new THREE.Vector3());
+const maxDim = Math.max(size.x, size.y, size.z);
+
+const angles = {
+  front: 0,
+  'three-quarter': 42,
+  side: 90,
+  'side-left': -90,
+  rear: 180,
+  'three-quarter-rear': 138,
+  top: 0
+};
+let orbit = THREE.MathUtils.degToRad(angles[angleName] ?? 42);
+
+const headBone = model.getObjectByName('head');
+const headPos = new THREE.Vector3();
+if (headBone) headBone.getWorldPosition(headPos);
+
+let focus, radius, camY;
+if (headOnly) {
+  // Frame the head bone, not the bounding box: the head sits at the front of
+  // every model, so a box-relative guess crops the face.
+  focus = headPos.clone().add(new THREE.Vector3(0, maxDim * 0.04, maxDim * 0.06));
+  radius = maxDim * 0.62;
+  camY = focus.y + maxDim * 0.03;
+} else {
+  focus = new THREE.Vector3(center.x, box.min.y + size.y * 0.5, center.z);
+  radius = maxDim * 2.15;
+  camY = focus.y + maxDim * 0.12;
+}
+if (angleName === 'top') {
+  camera.position.set(focus.x, box.max.y + maxDim * 1.5, focus.z + 0.001);
+  camera.lookAt(focus);
+} else {
+  camera.position.set(
+    focus.x + Math.sin(orbit) * radius,
+    camY,
+    focus.z + Math.cos(orbit) * radius
+  );
+  camera.lookAt(focus);
+}
+camera.updateProjectionMatrix();
+
+document.getElementById('label').textContent = `${id.replace('_', ' ')} · ${angleName} · ${clipName}${clipTime ? '@' + clipTime.toFixed(2) : ''}`;
+document.getElementById('hint').textContent = gltf.animations.map((a) => a.name).join(' · ');
+
+window.viewer = {
+  id,
+  clips: gltf.animations.map((a) => a.name),
+  setClip(name, t = 0) {
+    const clip = gltf.animations.find((c) => c.name === name);
+    if (!clip) return false;
+    if (action) action.stop();
+    action = mixer.clipAction(clip);
+    action.play();
+    action.paused = true;
+    mixer.setTime(t);
+    document.getElementById('label').textContent = `${id.replace('_', ' ')} · ${angleName} · ${name}@${t}`;
+    return true;
+  },
+  setOrbit(deg) {
+    orbit = THREE.MathUtils.degToRad(deg);
+    const d = radius;
+    camera.position.set(focus.x + Math.sin(orbit) * d, focus.y + maxDim * 0.1, focus.z + Math.cos(orbit) * d);
+    camera.lookAt(focus);
+  },
+  ready: true
+};
+renderer.render(scene, camera);
+document.body.dataset.ready = '1';
+</script>
+</body>
+</html>

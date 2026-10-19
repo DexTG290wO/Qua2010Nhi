@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#ffd7e6" />
+  <meta
+    name="description"
+    content="Nhi's Dream Zoo — một thế giới cổ tích 3D nhỏ xinh được tạo riêng cho chị Nhi."
+  />
+  <title>Nhi's Dream Zoo • Thế Giới Nhỏ Dành Riêng Cho Chị Nhi</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Quicksand:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><circle cx=%2216%22 cy=%2222%22 r=%227%22 fill=%22%23ff9ec2%22/><circle cx=%2210%22 cy=%2211%22 r=%225.5%22 fill=%22%23ffc2d6%22/><circle cx=%2222%22 cy=%2211%22 r=%225.5%22 fill=%22%23cdb4f6%22/><circle cx=%2216%22 cy=%2216%22 r=%224%22 fill=%22%23fff3c9%22/></svg>" />
+  <link rel="stylesheet" href="./src/style.css" />
+</head>
+<body class="booting">
+  <!-- ============================ 3D CANVAS ============================ -->
+  <div id="canvas-container" aria-hidden="true"></div>
+
+  <!-- ============================ INTRO ================================= -->
+  <div id="intro-screen" class="intro-screen">
+    <div class="intro-scrim"></div>
+    <div class="intro-glow"></div>
+
+    <div class="intro-inner">
+      <p class="intro-kicker">A Little World Made Just For Nhi</p>
+      <h1 class="intro-title">Nhi's Dream Zoo</h1>
+      <div class="intro-rule"><span></span><i></i><span></span></div>
+      <p class="intro-sub">
+        Một thế giới cổ tích 3D với những khu vườn pastel, hồ nước lấp lánh và
+        mười người bạn động vật nhỏ đang chờ được chị Nhi vuốt ve, cho ăn và cùng chơi đùa.
+      </p>
+
+      <div class="intro-actions">
+        <button id="btn-start-journey" class="btn btn-primary">
+          <span>Bắt đầu chuyến tham quan</span>
+        </button>
+        <button id="btn-skip-intro" class="btn btn-ghost">Bỏ qua phần giới thiệu</button>
+      </div>
+
+      <div class="intro-foot">
+        <button id="btn-intro-sound" class="btn btn-sound" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h3l4-3.5v13L7 15H4z"/><path class="wave" d="M15 8.5c1.4 1 1.4 6 0 7"/><path class="wave2" d="M18 6c2.6 2.4 2.6 9.6 0 12"/></svg>
+          <span id="intro-sound-label">Bật nhạc</span>
+        </button>
+        <p class="intro-note">Nhạc chỉ phát sau khi chị nhấn nút, đúng như trình duyệt yêu cầu.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================ HUD ================================== -->
+  <div id="game-hud" class="hud" aria-hidden="true">
+    <header class="hud-top">
+      <div class="brand" id="brand-chip">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32"><circle cx="16" cy="22" r="7"/><circle cx="10" cy="11" r="5.5"/><circle cx="22" cy="11" r="5.5"/><circle cx="16" cy="16" r="4"/></svg>
+        </span>
+        <span class="brand-text">
+          <strong>Nhi's Dream Zoo</strong>
+          <em id="brand-zone">Cổng chào</em>
+        </span>
+      </div>
+
+      <div class="time-switch" role="group" aria-label="Thời gian trong ngày">
+        <button class="time-btn" data-time="dawn" title="Bình minh"><i class="dot dawn"></i><span>Bình minh</span></button>
+        <button class="time-btn is-active" data-time="day" title="Ban ngày"><i class="dot day"></i><span>Ban ngày</span></button>
+        <button class="time-btn" data-time="sunset" title="Hoàng hôn"><i class="dot sunset"></i><span>Hoàng hôn</span></button>
+        <button class="time-btn" data-time="night" title="Đêm sao"><i class="dot night"></i><span>Đêm sao</span></button>
+      </div>
+
+      <div class="hud-actions">
+        <button id="btn-sound-toggle" class="btn-icon is-on" title="Bật / tắt âm thanh" aria-label="Bật tắt âm thanh">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h3l4-3.5v13L7 15H4z"/><path class="wave" d="M15 8.5c1.4 1 1.4 6 0 7"/><path class="wave2" d="M18 6c2.6 2.4 2.6 9.6 0 12"/></svg>
+        </button>
+        <button id="btn-photo-mode" class="btn-icon" title="Chế độ chụp ảnh" aria-label="Chế độ chụp ảnh">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3v10H4z"/><circle cx="12" cy="12.5" r="3.4"/></svg>
+        </button>
+        <button id="btn-open-diary" class="btn-icon" title="Nhật ký &amp; thành tích" aria-label="Nhật ký và thành tích">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5A2 2 0 0 1 7 4h11v16H7a2 2 0 0 1-2-1.5z"/><path d="M9 8.5h6M9 12h6"/></svg>
+        </button>
+        <button id="btn-help" class="btn-icon" title="Hướng dẫn điều khiển" aria-label="Hướng dẫn điều khiển">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .9-1 1.7v.3"/><circle cx="12" cy="17" r="0.9" class="fill"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Secondary tool row: keep the top row breathable. -->
+    <div class="hud-sub">
+      <button id="btn-exit-focus" class="btn btn-ghost btn-small is-hidden">Thoát tương tác</button>
+      <div class="zone-dock" id="zone-dock" role="group" aria-label="Di chuyển nhanh giữa các khu vực">
+        <button class="zone-chip" data-zone="plaza"><i class="zone-dot plaza"></i><span>Quảng trường</span></button>
+        <button class="zone-chip" data-zone="flower_meadow"><i class="zone-dot meadow"></i><span>Vườn Thỏ</span></button>
+        <button class="zone-chip" data-zone="sweet_grassland"><i class="zone-dot grass"></i><span>Đồng Cỏ Voi</span></button>
+        <button class="zone-chip" data-zone="sunset_savanna"><i class="zone-dot savanna"></i><span>Thảo Nguyên</span></button>
+        <button class="zone-chip" data-zone="capybara_lake"><i class="zone-dot lake"></i><span>Hồ Capybara</span></button>
+        <button class="zone-chip" data-zone="fairytale_forest"><i class="zone-dot forest"></i><span>Rừng Cổ Tích</span></button>
+        <button class="zone-chip" data-zone="crystal_ice"><i class="zone-dot ice"></i><span>Đảo Băng</span></button>
+        <button class="zone-chip" data-zone="lotus_pond"><i class="zone-dot lotus"></i><span>Đầm Sen</span></button>
+        <button class="zone-chip zone-secret" data-zone="secret_garden"><i class="zone-dot secret"></i><span>Vườn Của Nhi</span></button>
+      </div>
+      <p class="hint-bar" id="hint-bar">
+        <span class="hint-mouse">Kéo chuột để xoay • Lăn chuột để phóng to • Nhấn vào một bé để tương tác</span>
+        <span class="hint-touch">Chạm và kéo để xoay • Chụm hai ngón để phóng to • Chạm vào một bé để tương tác</span>
+      </p>
+    </div>
+
+    <!-- ===================== ANIMAL INTERACTION CARD ===================== -->
+    <section id="animal-card" class="animal-card" aria-hidden="true">
+      <button id="btn-card-close" class="card-close" aria-label="Đóng thẻ thông tin">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg>
+      </button>
+
+      <div class="card-head">
+        <div id="card-avatar" class="card-avatar" aria-hidden="true">
+          <svg viewBox="0 0 32 32"><circle cx="16" cy="22" r="7"/><circle cx="10" cy="11" r="5.5"/><circle cx="22" cy="11" r="5.5"/></svg>
+        </div>
+        <div class="card-titles">
+          <h2 id="card-name">Bé động vật</h2>
+          <p id="card-species" class="card-species">Loài</p>
+          <p id="card-title" class="card-tagline"></p>
+        </div>
+      </div>
+
+      <p id="card-desc" class="card-desc"></p>
+      <ul id="card-facts" class="card-facts"></ul>
+
+      <div class="meter">
+        <div class="meter-row">
+          <span>Mức độ thân thiết</span>
+          <strong id="friendship-val">0%</strong>
+        </div>
+        <div class="meter-track"><div id="friendship-bar" class="meter-fill"></div></div>
+        <p id="card-stats" class="meter-stats"></p>
+      </div>
+
+      <div class="card-actions">
+        <button id="btn-card-pet" class="btn-action act-pet">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 13.5c0-2.5 2-4 4-4s4 1.5 4 4c0 2.6-2 4.5-4 4.5s-4-1.9-4-4.5z"/><circle cx="6" cy="8" r="2.2"/><circle cx="10.5" cy="5.6" r="2.2"/><circle cx="15.5" cy="5.6" r="2.2"/><circle cx="19" cy="8" r="2.2"/></svg>
+          <span>Vuốt ve</span>
+        </button>
+        <button id="btn-card-feed" class="btn-action act-feed">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9h14l-1.4 9.2H6.4z"/><path d="M9 9V6.8A2.6 2.6 0 0 1 12 4a2.6 2.6 0 0 1 3 2.8V9"/></svg>
+          <span>Cho ăn</span>
+        </button>
+        <button id="btn-card-play" class="btn-action act-play">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M4.5 9.5h15M4.5 14.5h15"/></svg>
+          <span>Chơi cùng</span>
+        </button>
+      </div>
+
+      <div id="food-drawer" class="food-drawer" aria-hidden="true">
+        <p class="food-title">Chọn món ngon mời bé</p>
+        <div class="food-grid">
+          <button class="food-item-btn" data-food="carrot"><span class="food-glyph carrot"></span><span class="food-name">Cà rốt</span></button>
+          <button class="food-item-btn" data-food="apple"><span class="food-glyph apple"></span><span class="food-name">Táo đỏ</span></button>
+          <button class="food-item-btn" data-food="bamboo"><span class="food-glyph bamboo"></span><span class="food-name">Trúc non</span></button>
+          <button class="food-item-btn" data-food="fish"><span class="food-glyph fish"></span><span class="food-name">Cá bạc</span></button>
+          <button class="food-item-btn" data-food="watermelon"><span class="food-glyph melon"></span><span class="food-name">Dưa hấu</span></button>
+          <button class="food-item-btn" data-food="orange"><span class="food-glyph orange"></span><span class="food-name">Cam ngọt</span></button>
+        </div>
+        <p class="food-hint">Kéo món ăn tới bé để mời bé đến ăn, hoặc chỉ cần chạm.</p>
+      </div>
+    </section>
+
+    <div id="toast-stack" class="toast-stack" aria-live="polite"></div>
+  </div>
+
+  <!-- ============================ DIARY ================================ -->
+  <div id="diary-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="diary-title">
+    <div class="modal-card modal-card-wide">
+      <button class="modal-close" data-close="diary-modal" aria-label="Đóng">
+        <svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg>
+      </button>
+      <header class="modal-head">
+        <p class="modal-kicker">Nhật ký của chị</p>
+        <h2 id="diary-title">Hành Trình Của Nhi</h2>
+      </header>
+      <div id="diary-stats" class="diary-stats"></div>
+      <h3 class="modal-subtitle">Thành tích</h3>
+      <div id="achievement-grid" class="achievement-grid"></div>
+      <div class="diary-note">
+        <strong>Bí mật nhỏ:</strong> Ở <em>Vườn Bí Mật Của Nhi</em> phía bắc sở thú có một
+        chiếc hộp quà. Chị hãy chạm vào chiếc hộp để mở lá thư được gửi riêng cho mình nhé.
+      </div>
+      <button class="btn btn-ghost btn-small diary-reset" id="btn-reset-progress">Bắt đầu lại hành trình</button>
+    </div>
+  </div>
+
+  <!-- ============================ LETTER =============================== -->
+  <div id="letter-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="letter-title">
+    <div class="letter-card">
+      <button class="modal-close" data-close="letter-modal" aria-label="Đóng">
+        <svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg>
+      </button>
+      <div class="letter-seal" aria-hidden="true">
+        <svg viewBox="0 0 64 64"><path d="M32 56C18 44 10 36 10 27a11 11 0 0 1 22-3 11 11 0 0 1 22 3c0 9-8 17-22 29z"/></svg>
+      </div>
+      <h2 id="letter-title">Món Quà Dành Riêng Cho Chị Nhi</h2>
+      <div class="letter-body">
+        <p>Chị Nhi thân mến,</p>
+        <p>
+          Nếu chị đang đọc những dòng này, nghĩa là chị đã đi hết con đường hoa, ghé qua hồ nước
+          lấp lánh và tìm thấy chiếc hộp nhỏ này. Cả thế giới <em>Nhi's Dream Zoo</em> được dựng
+          nên chỉ để dành tặng riêng chị.
+        </p>
+        <p>
+          Ở đây có bé Thỏ Mochi đang chờ được vuốt ve, bác Ba Capybara thư thái bên hồ, chú Cáo Nhỏ
+          Lửa thích chạy đua cùng những cánh hoa, và cả Voi Con Kem thích nghịch nước nữa.
+        </p>
+        <p>
+          Mong rằng mỗi lần ghé thăm nơi này, chị sẽ thấy lòng mình nhẹ nhàng hơn một chút. Chúc chị
+          luôn xinh đẹp, rạng rỡ và gặp thật nhiều điều dịu dàng trên mọi hành trình phía trước.
+        </p>
+      </div>
+      <p class="letter-sign">Gửi tới chị với tất cả sự trân quý.</p>
+    </div>
+  </div>
+
+  <!-- ============================ HELP ================================= -->
+  <div id="help-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="help-title">
+    <div class="modal-card">
+      <button class="modal-close" data-close="help-modal" aria-label="Đóng">
+        <svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg>
+      </button>
+      <header class="modal-head">
+        <p class="modal-kicker">Hướng dẫn</p>
+        <h2 id="help-title">Cách Dạo Chơi</h2>
+      </header>
+      <ul class="help-list">
+        <li><strong>Xoay góc nhìn</strong><span>Nhấn giữ và kéo (hoặc chạm và kéo trên điện thoại).</span></li>
+        <li><strong>Phóng to / thu nhỏ</strong><span>Lăn chuột, hoặc chụm hai ngón tay.</span></li>
+        <li><strong>Chọn một bé</strong><span>Nhấn vào bé động vật. Camera sẽ lại gần và thẻ thông tin hiện ra.</span></li>
+        <li><strong>Vuốt ve</strong><span>Mở thẻ thông tin rồi nhấn “Vuốt ve”.</span></li>
+        <li><strong>Cho ăn</strong><span>Nhấn “Cho ăn”, chọn món, rồi kéo món ăn tới bé.</span></li>
+        <li><strong>Chơi cùng</strong><span>Nhấn “Chơi cùng” để ném bóng cho các bé đuổi theo.</span></li>
+        <li><strong>Di chuyển nhanh</strong><span>Dùng dãy khu vực ở cạnh dưới màn hình.</span></li>
+      </ul>
+      <button class="btn btn-primary btn-small" data-close="help-modal">Đã hiểu</button>
+    </div>
+  </div>
+
+  <!-- ============================ PHOTO ================================ -->
+  <div id="photo-overlay" class="photo-overlay" aria-hidden="true">
+    <div class="viewfinder">
+      <span class="corner tl"></span><span class="corner tr"></span>
+      <span class="corner bl"></span><span class="corner br"></span>
+      <div class="viewfinder-label">Nhi's Dream Zoo • Memories for Nhi</div>
+    </div>
+    <div class="photo-actions">
+      <button id="btn-take-snap" class="btn btn-primary">Chụp &amp; lưu ảnh</button>
+      <button id="btn-exit-photo" class="btn btn-ghost">Quay lại</button>
+    </div>
+  </div>
+
+  <!-- ============================ BOOT ERROR =========================== -->
+  <div id="boot-error" class="boot-error">
+    <div class="boot-error-card">
+      <h2>Ôi, có gì đó chưa ổn</h2>
+      <p>
+        Thế giới nhỏ của chị Nhi chưa mở được. Hãy thử tải lại trang, hoặc bật WebGL
+        trong trình duyệt nhé.
+      </p>
+      <p class="boot-error-detail"></p>
+      <button class="btn btn-primary btn-small" onclick="location.reload()">Tải lại trang</button>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

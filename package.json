@@ -1,0 +1,28 @@
+{
+  "name": "nhis-dream-zoo",
+  "version": "1.0.0",
+  "description": "Nhi's Dream Zoo - 3D Interactive Sanctuary Dedicated to Nhi",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview",
+    "build:models": "node tools/build-models.mjs",
+    "test:diag": "node test-diagnostics.js",
+    "test:visual": "node test-visual.js",
+    "test:fallback": "node tools/verify-fallback.mjs",
+    "test:anatomy": "node tools/verify-anatomy.mjs",
+    "test:motion": "node tools/verify-motion.mjs",
+    "preview:ascii": "node tools/ascii-preview.mjs",
+    "gallery": "node tools/capture-gallery.mjs",
+    "gallery:animals": "node tools/capture-animals.mjs",
+    "profile:scene": "node tools/profile-scene.mjs"
+  },
+  "dependencies": {
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^25.14.0",
+    "vite": "^8.3.4"
+  }
+}
